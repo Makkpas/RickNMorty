@@ -15,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 
 import com.example.rickmorty.R;
 import com.example.rickmorty.adapter.CharacterAdapter;
@@ -32,10 +33,17 @@ import retrofit2.Response;
 
 public class CharacterFragment extends Fragment {
 
+    private final String TAG = "CharacterFragment";
     private AppCompatActivity activity;
     private ArrayList<Character> characters;
-    private final String TAG = "CharacterFragment";
     private CharacterAdapter characterAdapter;
+
+    boolean canLoad = true;
+    int limit = 0;
+    int page = 1;
+    private LinearLayoutManager linearLayoutManager;
+    private ProgressBar pbLoading;
+    private RecyclerView rvCharacters;
 
     public CharacterFragment() {
         // Required empty public constructor
@@ -65,7 +73,11 @@ public class CharacterFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_character, container, false);
 
-        RecyclerView rvCharacters = view.findViewById(R.id.rv_characters);
+        pbLoading = view.findViewById(R.id.pb_loading);
+
+        rvCharacters = view.findViewById(R.id.rv_characters);
+
+        //TODO: Agregar listener al RV
 
         //ArrayList --> Adapter <-- RecyclerView
 
@@ -73,29 +85,66 @@ public class CharacterFragment extends Fragment {
         rvCharacters.setAdapter(characterAdapter);
         rvCharacters.setHasFixedSize(true);
 
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(activity);
+        linearLayoutManager = new LinearLayoutManager(activity);
 
         rvCharacters.setLayoutManager(linearLayoutManager);
 
         characterAdapter.addCharacters(characters);
 
+        setupRVScrollListener(rvCharacters);
+
         return view;
     }
-
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         //ToDo: se hace la lógica
 
-        getCharactersInfo();
+        getCharactersInfo(page);
     }
 
-    private void getCharactersInfo() {
-        // TODO: cargar los datos del rest api
+
+    public void setupRVScrollListener(RecyclerView recyclerView){
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                //dy = + -> personaje 0 a 20
+                //dy = - -> personaje 20 a 0
+                if (dy > 0){
+
+                    //Total de items
+                    int totalItems = linearLayoutManager.getItemCount();
+
+                    //Items que ya se mostraron
+                    int pastItem = linearLayoutManager.findFirstVisibleItemPosition();
+
+                    //Items que se estan monstrando
+                    int visibleItem = linearLayoutManager.getChildCount();
+
+
+                    if (canLoad){
+                        if ((pastItem + visibleItem) >= totalItems){
+                            page++;
+                            pbLoading.setVisibility(View.VISIBLE);
+                            getCharactersInfo(page);
+
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    private void getCharactersInfo(int page) {
+
+        canLoad = false;
+
         CharacterService characterService = RetrofitBuilder.createService(CharacterService.class);
 
-        Call<CharacterResponse> response  =  characterService.getCharacters();
+        Call<CharacterResponse> response  =  characterService.getCharacters(page);
 
         response.enqueue(new Callback<CharacterResponse>() {
             @Override
@@ -104,23 +153,26 @@ public class CharacterFragment extends Fragment {
                     CharacterResponse characterResponse = response.body();
 
                     ArrayList<Character> characters = characterResponse.getResults();
-
-                    for(Character character: characters){
-                        Log.i(TAG, "Character: "+ character.getName());
-                    }
-
                     characterAdapter.addCharacters(characters);
+
+                    showCharacter(true);
                 } else {
                     Log.i(TAG, "onError: " + response.errorBody());
                 }
+                canLoad = true;
             }
 
             @Override
             public void onFailure(@NonNull Call<CharacterResponse> call, @NonNull Throwable t) {
-
+                canLoad = true;
                 throw  new  RuntimeException(t);
             }
         });
+    }
+
+    public void showCharacter(boolean setVisible){
+        rvCharacters.setVisibility(setVisible ? View.VISIBLE : View.GONE);
+        pbLoading.setVisibility(setVisible ? View.VISIBLE : View.GONE);
     }
 
     @Override

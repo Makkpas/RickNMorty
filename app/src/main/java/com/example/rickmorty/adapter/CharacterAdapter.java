@@ -1,6 +1,7 @@
 package com.example.rickmorty.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,10 +9,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.example.rickmorty.CharacterActivity;
 import com.example.rickmorty.R;
 
 import java.util.ArrayList;
@@ -20,7 +23,7 @@ import com.example.rickmorty.models.Character;
 
 
 
-public class CharacterAdapter extends RecyclerView.Adapter<CharacterAdapter.ViewHolder> {
+public class CharacterAdapter extends RecyclerView.Adapter<CharacterAdapter.ViewHolder> implements ItemClickListener {
 
     private Context context;
     private ArrayList<Character> characters;
@@ -43,7 +46,7 @@ public class CharacterAdapter extends RecyclerView.Adapter<CharacterAdapter.View
 
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.card_character, parent, false);
 
-        return new ViewHolder(view);
+        return new ViewHolder(view, this);
     }
 
 
@@ -77,7 +80,9 @@ public class CharacterAdapter extends RecyclerView.Adapter<CharacterAdapter.View
     }
 
     // Es clase se encarga de añadir los elementos del layout
-    public class ViewHolder extends RecyclerView.ViewHolder{
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
+        private  CardView cvCardCharacter;
 
         private final ImageView ivCharacter;
 
@@ -86,8 +91,13 @@ public class CharacterAdapter extends RecyclerView.Adapter<CharacterAdapter.View
         private final TextView tvSpecies;
         private final TextView tvLocation;
 
-        public ViewHolder(@NonNull View view) {
+        private ItemClickListener listener;
+
+        public ViewHolder(@NonNull View view, ItemClickListener listener) {
             super(view);
+
+            this.listener = listener;
+            cvCardCharacter = view.findViewById(R.id.cv_card_character);
 
             ivCharacter = view.findViewById(R.id.iv_character);
 
@@ -96,6 +106,31 @@ public class CharacterAdapter extends RecyclerView.Adapter<CharacterAdapter.View
             tvSpecies = view.findViewById(R.id.tv_species);
             tvLocation = view.findViewById(R.id.tv_location);
 
+            cvCardCharacter.setOnClickListener(this);
+
+
+        }
+
+        @Override
+        public void onClick(View view) {
+            listener.onClick(view, getLayoutPosition());
         }
     }
+
+    @Override
+    public void onClick(View view, int position) {
+        //TODO: crear el activity que tiene la info
+
+        Intent intent = new Intent(context, CharacterActivity.class);
+
+        Character character = characters.get(position);
+        intent.putExtra(context.getString(R.string.character_id), character.getId());
+        intent.putExtra(context.getString(R.string.character_name), character.getName());
+
+        context.startActivity(intent);
+    }
+}
+
+interface ItemClickListener{
+    void  onClick(View view, int position);
 }
