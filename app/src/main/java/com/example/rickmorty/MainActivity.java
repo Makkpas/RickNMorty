@@ -9,6 +9,8 @@ import android.os.Bundle;
 
 import com.example.rickmorty.adapter.MainViewPagerAdapter;
 import com.example.rickmorty.fragments.CharacterFragment;
+import com.example.rickmorty.fragments.EpisodeFragment;
+import com.example.rickmorty.fragments.LocationFragment;
 import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
@@ -45,8 +47,8 @@ public class MainActivity extends AppCompatActivity {
         //TODO: add fragments
         //TODO: hacer los fragments de localizaciones y episodios
         fragments.add(CharacterFragment.newInstance());
-        fragments.add(CharacterFragment.newInstance());
-        fragments.add(CharacterFragment.newInstance());
+        fragments.add(LocationFragment.newInstance());
+        fragments.add(EpisodeFragment.newInstance());
 
         MainViewPagerAdapter mainViewPagerAdapter = new MainViewPagerAdapter(getSupportFragmentManager(), fragments, titles);
 

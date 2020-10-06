@@ -134,3 +134,4 @@ public class CharacterAdapter extends RecyclerView.Adapter<CharacterAdapter.View
 interface ItemClickListener{
     void  onClick(View view, int position);
 }
+
